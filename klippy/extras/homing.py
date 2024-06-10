@@ -342,6 +342,7 @@ class Homing:
                 hmove = HomingMove(self.printer, endstops)
                 hmove.homing_move(homepos, hi.second_homing_speed)
                 if hmove.check_no_movement() is not None:
+                    self._set_current_post_homing(homing_axes)
                     raise self.printer.command_error(
                         "Endstop %s still triggered after retract"
                         % (hmove.check_no_movement(),)
@@ -353,6 +354,7 @@ class Homing:
                         hi.min_home_dist, homing_axes
                     )
                 ):
+                    self._set_current_post_homing(homing_axes)
                     raise self.printer.command_error(
                         "Early homing trigger on second home!"
                     )

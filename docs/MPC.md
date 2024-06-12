@@ -232,6 +232,47 @@ MPC works best knowing how much energy (in Joules) it takes to heat 1mm of filam
 
 **Use the specific heat from the base polymer
 
+### An example macro for automatically setting these values
+
+These values are copied from the above tables, heat capacities are the middle of the range.
+
+Your slicer must be configured to pass the current material type to your `PRINT_START`, for PrusaSlicer and family you may use `PRINT_START MATERIAL=[filament_type[initial_extruder]] # and other values...`
+
+Then, in your `PRINT_START` macro, call `_SET_MPC_MATERIAL MATERIAL={params.MATERIAL}`
+
+```ini
+[respond] # Must be enabled for the following `RESPOND` to work
+
+[gcode_macro _SET_MPC_MATERIAL]
+gcode:
+    {% set filament_table = {
+        # Values are a tuple of ( density, heat capacity )
+        None        : ( 1.20 , 1.80  ),  # Default, should work for most materials
+        "PLA"       : ( 1.25 , 2.00  ),  # 1.80 - 2.20
+        "PETG"      : ( 1.27 , 1.95  ),  # 1.70 - 2.20
+        "PC+ABS"    : ( 1.15 , 1.85  ),  # 1.50 - 2.20
+        "ABS"       : ( 1.06 , 1.825 ),  # 1.25 - 2.40
+        "ASA"       : ( 1.07 , 1.70  ),  # 1.30 - 2.10
+        "PA6"       : ( 1.12 , 2.25  ),  # 2.00 - 2.50
+        "PA"        : ( 1.15 , 2.25  ),  # 2.00 - 2.50
+        "PC"        : ( 1.20 , 1.50  ),  # 1.10 - 1.90
+        "TPU"       : ( 1.21 , 1.75  ),  # 1.50 - 2.00
+        "TPU-90A"   : ( 1.15 , 1.75  ),  # 1.50 - 2.00
+        "TPU-95A"   : ( 1.22 , 1.75  ),  # 1.50 - 2.00
+        "ABS-CF"    : ( 1.11 , 1.825 ),  # 1.25 - 2.40
+        "ASA-CF"    : ( 1.11 , 1.70  ),  # 1.30 - 2.10
+        "PA6-CF"    : ( 1.19 , 2.25  ),  # 2.00 - 2.50
+        "PC+ABS-CF" : ( 1.22 , 1.85  ),  # 1.50 - 2.20
+        "PC+CF"     : ( 1.36 , 1.50  ),  # 1.10 - 1.90
+        "PLA-CF"    : ( 1.29 , 2.00  ),  # 1.80 - 2.20
+        "PETG-CF"   : ( 1.30 , 1.95  ),  # 1.70 - 2.20
+    } %}
+    {% set filament_specs = filament_table.get(params.MATERIAL) | default(filament_table[None]) %}
+
+    RESPOND PREFIX=🔥 MSG="Configured MPC for {params.MATERIAL | default('Unknown filament')}; Density: {filament_specs[0]}, Heat Capacity: {filament_specs[1]}"
+    MPC_SET HEATER={params.HEATER | default('extruder')} FILAMENT_DENSITY={filament_specs[0]} FILAMENT_HEAT_CAPACITY={filament_specs[1]}
+```
+
 # Real-Time Model State
 
 The real-time temperatures and model states can be viewed from a browser by entering the following local address for your computer.
